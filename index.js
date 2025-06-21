@@ -1,7 +1,6 @@
-
 import express from "express";
 import fetch from "node-fetch";
-import { ethers } from "ethers";
+import ethers from "ethers";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -16,11 +15,7 @@ const PROOF_API_URL = process.env.PROOF_API_URL;
 const ABI = [
   {
     "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "proof",
-        "type": "bytes"
-      }
+      { "internalType": "bytes", "name": "proof", "type": "bytes" }
     ],
     "name": "executeAllPendingOrders",
     "outputs": [],
@@ -31,7 +26,7 @@ const ABI = [
 
 app.get("/execute", async (req, res) => {
   try {
-    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
     const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
 
