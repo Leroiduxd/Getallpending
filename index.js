@@ -15,28 +15,29 @@ const PROOF_API_URL = process.env.PROOF_API_URL;
 
 const ABI = [
   {
-    "inputs": [
-      { "internalType": "bytes", "name": "proof", "type": "bytes" }
-    ],
+    "inputs": [{ "internalType": "bytes", "name": "proof", "type": "bytes" }],
     "name": "executeAllPendingOrders",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "bytes", "name": "proof", "type": "bytes" }
-    ],
+    "inputs": [{ "internalType": "bytes", "name": "proof", "type": "bytes" }],
     "name": "closeAllOnTargets",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "bytes", "name": "proof", "type": "bytes" }
-    ],
+    "inputs": [{ "internalType": "bytes", "name": "proof", "type": "bytes" }],
     "name": "executeConditionalOrdersByAsset",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bytes", "name": "proof", "type": "bytes" }],
+    "name": "confirmAllCloseRequests",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -76,6 +77,18 @@ app.get("/execute-conditional", async (req, res) => {
     const response = await fetch(PROOF_API_URL);
     const data = await response.json();
     const tx = await contract.executeConditionalOrdersByAsset(data.proof);
+    await tx.wait();
+    res.send({ success: true, txHash: tx.hash });
+  } catch (error) {
+    res.status(500).send({ success: false, error: error.message });
+  }
+});
+
+app.get("/confirm-close", async (req, res) => {
+  try {
+    const response = await fetch(PROOF_API_URL);
+    const data = await response.json();
+    const tx = await contract.confirmAllCloseRequests(data.proof);
     await tx.wait();
     res.send({ success: true, txHash: tx.hash });
   } catch (error) {
