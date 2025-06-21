@@ -1,6 +1,6 @@
 import express from "express";
 import fetch from "node-fetch";
-import ethers from "ethers";
+import { ethers } from "ethers";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -30,19 +30,20 @@ app.get("/execute", async (req, res) => {
     const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
 
-    const proofResponse = await fetch(PROOF_API_URL);
-    const proofData = await proofResponse.json();
-    const proof = proofData.proof;
+    const response = await fetch(PROOF_API_URL);
+    const data = await response.json();
+    const proof = data.proof;
 
     const tx = await contract.executeAllPendingOrders(proof);
     await tx.wait();
 
     res.json({ success: true, txHash: tx.hash });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
 app.listen(port, () => {
-  console.log(`API server running on http://localhost:${port}`);
+  console.log(`API running at http://localhost:${port}/execute`);
 });
+
