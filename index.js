@@ -16,13 +16,27 @@ const PROOF_API_URL = process.env.PROOF_API_URL;
 const ABI = [
   {
     "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "proof",
-        "type": "bytes"
-      }
+      { "internalType": "bytes", "name": "proof", "type": "bytes" }
     ],
     "name": "executeAllPendingOrders",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bytes", "name": "proof", "type": "bytes" }
+    ],
+    "name": "closeAllOnTargets",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bytes", "name": "proof", "type": "bytes" }
+    ],
+    "name": "executeConditionalOrdersByAsset",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -30,7 +44,7 @@ const ABI = [
 ];
 
 const provider = new ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+const wallet = new ethers.Wallet(PRIVATE_KEY.trim(), provider);
 const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
 
 app.get("/execute-all", async (req, res) => {
@@ -38,6 +52,30 @@ app.get("/execute-all", async (req, res) => {
     const response = await fetch(PROOF_API_URL);
     const data = await response.json();
     const tx = await contract.executeAllPendingOrders(data.proof);
+    await tx.wait();
+    res.send({ success: true, txHash: tx.hash });
+  } catch (error) {
+    res.status(500).send({ success: false, error: error.message });
+  }
+});
+
+app.get("/close-on-targets", async (req, res) => {
+  try {
+    const response = await fetch(PROOF_API_URL);
+    const data = await response.json();
+    const tx = await contract.closeAllOnTargets(data.proof);
+    await tx.wait();
+    res.send({ success: true, txHash: tx.hash });
+  } catch (error) {
+    res.status(500).send({ success: false, error: error.message });
+  }
+});
+
+app.get("/execute-conditional", async (req, res) => {
+  try {
+    const response = await fetch(PROOF_API_URL);
+    const data = await response.json();
+    const tx = await contract.executeConditionalOrdersByAsset(data.proof);
     await tx.wait();
     res.send({ success: true, txHash: tx.hash });
   } catch (error) {
