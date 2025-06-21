@@ -7,13 +7,12 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Variables d'environnement
+// .env variables
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
 const RPC_URL = process.env.RPC_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const PROOF_API_URL = process.env.PROOF_API_URL;
 
-// ABI minimale
 const ABI = [
   {
     "inputs": [
@@ -26,34 +25,33 @@ const ABI = [
   }
 ];
 
-// Endpoint API Railway
 app.get("/execute", async (req, res) => {
   try {
-    // 1. Setup ethers
+    // Setup signer
     const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
+    const signer = new ethers.Wallet(PRIVATE_KEY, provider);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
-    // 2. Appel à l'API de proof
-    const response = await fetch(PROOF_API_URL + "/proof");
-    const data = await response.json();
+    // GET real proof from API
+    const proofResponse = await fetch(PROOF_API_URL + "/proof");
+    const proofData = await proofResponse.json();
 
-    if (!data.proof || !data.proof.startsWith("0x")) {
-      return res.status(400).json({ success: false, error: "Invalid proof format" });
+    if (!proofData.proof || !proofData.proof.startsWith("0x")) {
+      return res.status(400).json({ success: false, error: "Invalid proof from API" });
     }
 
-    // 3. Exécution du smart contract
-    const tx = await contract.executeAllPendingOrders(data.proof);
+    // Call the contract
+    const tx = await contract.executeAllPendingOrders(proofData.proof);
     await tx.wait();
 
-    res.json({ success: true, txHash: tx.hash });
-  } catch (error) {
-    console.error("Erreur:", error);
-    res.status(500).json({ success: false, error: error.message });
+    return res.json({ success: true, txHash: tx.hash });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// Lancer le serveur Railway
 app.listen(port, () => {
-  console.log(`✅ Server running at http://localhost:${port}/execute`);
+  console.log(`Server running on http://localhost:${port}/execute`);
 });
+
