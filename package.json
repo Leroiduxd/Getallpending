@@ -1,5 +1,5 @@
 {
-  "name": "execute-all-orders",
+  "name": "execute-proof-api",
   "version": "1.0.0",
   "type": "module",
   "main": "index.js",
