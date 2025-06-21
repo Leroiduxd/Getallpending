@@ -1,8 +1,8 @@
-
 import express from "express";
 import fetch from "node-fetch";
 import { ethers } from "ethers";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 const app = express();
@@ -29,30 +29,22 @@ const ABI = [
   }
 ];
 
-app.get("/execute", async (req, res) => {
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
+
+app.get("/execute-all", async (req, res) => {
   try {
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
-
-    const response = await fetch(PROOF_API_URL + "/proof");
+    const response = await fetch(PROOF_API_URL);
     const data = await response.json();
-
-    if (!data.proof || typeof data.proof !== "string" || !data.proof.startsWith("0x")) {
-      return res.status(400).json({ success: false, error: "Invalid proof format received from API." });
-    }
-
-    const proofBytes = ethers.getBytes(data.proof);
-    const tx = await contract.executeAllPendingOrders(proofBytes);
+    const tx = await contract.executeAllPendingOrders(data.proof);
     await tx.wait();
-
-    res.json({ success: true, txHash: tx.hash });
-  } catch (err) {
-    console.error("Execution error:", err);
-    res.status(500).json({ success: false, error: err.message });
+    res.send({ success: true, txHash: tx.hash });
+  } catch (error) {
+    res.status(500).send({ success: false, error: error.message });
   }
 });
 
 app.listen(port, () => {
-  console.log(`✅ Server ready on http://localhost:${port}/execute`);
+  console.log(`Server is running at http://localhost:${port}`);
 });
